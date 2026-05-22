@@ -1,11 +1,14 @@
 import { STATUS_LABELS, TYPE_LABELS } from './domain.js';
+import { normalizeState } from './state.js';
 
 export function createBackup(state, exportedAt = new Date().toISOString()) {
+  const normalized = normalizeState(state);
   return {
-    version: 1,
+    version: 2,
     exportedAt,
-    courses: Array.isArray(state?.courses) ? state.courses : [],
-    records: Array.isArray(state?.records) ? state.records : [],
+    courses: normalized.courses,
+    records: normalized.records,
+    settings: normalized.settings,
   };
 }
 
@@ -17,10 +20,16 @@ export function parseBackup(jsonText) {
     throw new Error('备份文件格式不正确');
   }
 
-  if (!parsed || typeof parsed !== 'object' || parsed.version !== 1 || !Array.isArray(parsed.courses) || !Array.isArray(parsed.records)) {
+  if (
+    !parsed
+    || typeof parsed !== 'object'
+    || ![1, 2].includes(parsed.version)
+    || !Array.isArray(parsed.courses)
+    || !Array.isArray(parsed.records)
+  ) {
     throw new Error('备份文件格式不正确');
   }
-  return { courses: parsed.courses, records: parsed.records };
+  return normalizeState(parsed);
 }
 
 function csvCell(value) {

@@ -30,18 +30,39 @@ export function createId(prefix = 'id') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeSchedules(input) {
+  if (Array.isArray(input.schedules) && input.schedules.length > 0) {
+    return input.schedules
+      .map((schedule) => ({ weekday: Number(schedule?.weekday), time: schedule?.time || input.time || '' }))
+      .filter((schedule) => Number.isInteger(schedule.weekday) && schedule.weekday >= 0 && schedule.weekday <= 6);
+  }
+  if (Array.isArray(input.weekdays)) {
+    return input.weekdays
+      .map((weekday) => ({ weekday: Number(weekday), time: input.time || '' }))
+      .filter((schedule) => Number.isInteger(schedule.weekday) && schedule.weekday >= 0 && schedule.weekday <= 6);
+  }
+  return [];
+}
+
+function uniqueWeekdays(schedules) {
+  return [...new Set(schedules.map((schedule) => schedule.weekday))];
+}
+
 export function createCourse(input) {
   const now = input.now || new Date().toISOString();
+  const schedules = normalizeSchedules(input);
   return {
     id: input.id || createId('course'),
     name: String(input.name || '').trim(),
-    weekdays: Array.isArray(input.weekdays) ? input.weekdays.map(Number) : [],
-    time: input.time || '',
+    schedules,
+    weekdays: uniqueWeekdays(schedules),
+    time: input.time || schedules[0]?.time || '',
     totalLessons: Number(input.totalLessons || 0),
     remainingLessons: Number(input.remainingLessons ?? input.totalLessons ?? 0),
     defaultLessonCost: Number(input.defaultLessonCost ?? 1),
     isActive: input.isActive ?? true,
     note: input.note || '',
+    deletedAt: input.deletedAt || '',
     createdAt: input.createdAt || now,
     updatedAt: now,
   };
@@ -67,16 +88,33 @@ export function createRecord(input) {
     feedback: input.feedback || '',
     note: input.note || '',
     makeupForRecordId: input.makeupForRecordId || '',
+    deletedAt: input.deletedAt || '',
     createdAt: input.createdAt || now,
     updatedAt: now,
   };
 }
 
-export function applyRecordLessonCost(course, record) {
-  if (!consumesLesson(record.status)) return course;
+function getRecordLessonCost(record) {
+  const safeRecord = record || {};
+  return consumesLesson(safeRecord.status) ? Number(safeRecord.lessonCost || 0) : 0;
+}
+
+export function applyLessonBalance(course, lessonDelta, updatedAt = new Date().toISOString()) {
   return {
     ...course,
-    remainingLessons: Math.max(0, Number(course.remainingLessons || 0) - Number(record.lessonCost || 0)),
-    updatedAt: record.updatedAt,
+    remainingLessons: Math.max(0, Number(course.remainingLessons || 0) + Number(lessonDelta || 0)),
+    updatedAt,
   };
+}
+
+export function applyRecordLessonCost(course, record) {
+  return applyLessonBalance(course, -getRecordLessonCost(record), record.updatedAt);
+}
+
+export function rollbackRecordLessonCost(course, record) {
+  return applyLessonBalance(course, getRecordLessonCost(record), record.updatedAt);
+}
+
+export function getRecordLessonDelta(oldRecord, nextRecord) {
+  return getRecordLessonCost(oldRecord) - getRecordLessonCost(nextRecord);
 }

@@ -1,8 +1,8 @@
+import { createEmptyState, normalizeState } from './state.js';
+
 const STORAGE_KEY = 'interest-class-checkin-state-v1';
 
-export function createEmptyState() {
-  return { courses: [], records: [] };
-}
+export { createEmptyState };
 
 export function loadState(storage = globalThis.localStorage) {
   const resolvedStorage = storage ?? globalThis.localStorage;
@@ -21,20 +21,11 @@ export function loadState(storage = globalThis.localStorage) {
   if (!parsed || typeof parsed !== 'object') return createEmptyState();
   if (!Array.isArray(parsed.courses) || !Array.isArray(parsed.records)) return createEmptyState();
 
-  return {
-    courses: parsed.courses,
-    records: parsed.records,
-  };
+  return normalizeState(parsed);
 }
 
 export function saveState(storage = globalThis.localStorage, state) {
   if (!storage) throw new Error('storage unavailable');
 
-  storage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      courses: Array.isArray(state?.courses) ? state.courses : [],
-      records: Array.isArray(state?.records) ? state.records : [],
-    }),
-  );
+  storage.setItem(STORAGE_KEY, JSON.stringify(normalizeState(state)));
 }

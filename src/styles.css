@@ -72,6 +72,23 @@ button { cursor: pointer; }
   align-items: center;
 }
 .course-item p, .record-item p, .stat-card p { margin: 6px 0 0; }
+
+.course-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.deleted-section {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px dashed #d1d5db;
+}
+
+.deleted-section h3 {
+  margin: 0 0 8px;
+}
 .muted { color: #6b7280; }
 .file-button { display: inline-flex; align-items: center; justify-content: center; }
 .file-button input { display: none; }
@@ -96,9 +113,35 @@ button { cursor: pointer; }
 }
 .form-grid .full { grid-column: 1 / -1; }
 
+.schedule-list {
+  display: grid;
+  gap: 12px;
+}
+
+.schedule-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.schedule-row button {
+  margin-bottom: 1px;
+}
+
+.schedule-row .secondary {
+  white-space: nowrap;
+}
+
 .form-grid.compact {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: end;
+}
+
+.low-lesson-alert {
+  margin: 8px 0 0;
+  color: #b91c1c;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {
@@ -109,4 +152,6 @@ button { cursor: pointer; }
   .top-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .course-item { align-items: stretch; flex-direction: column; }
   .form-grid { grid-template-columns: 1fr; }
+  .schedule-row { grid-template-columns: 1fr; }
+  .schedule-row button { justify-self: start; }
 }
